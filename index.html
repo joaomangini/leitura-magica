@@ -19,6 +19,7 @@
   <main id="app">
     <!-- ===================== BIBLIOTECA ===================== -->
     <section id="view-library" class="view active">
+      <div id="profile-bar" class="profile-bar"></div>
       <p class="lead">Escolha uma história para ler em voz alta. Eu escuto e te ajudo a ler cada vez melhor! ✨</p>
       <div id="story-list" class="story-list"></div>
 
@@ -83,6 +84,26 @@
         <p id="encouragement" class="encouragement"></p>
       </div>
     </section>
+
+    <!-- ===================== PERFIS ===================== -->
+    <section id="view-profiles" class="view">
+      <h2 class="screen-title">Quem vai ler hoje? 👋</h2>
+      <div id="profile-list" class="profile-grid"></div>
+      <div class="custom-box">
+        <h2>➕ Novo leitor</h2>
+        <input id="new-profile-name" type="text" maxlength="20" placeholder="Nome da criança" />
+        <div id="emoji-picker" class="emoji-picker"></div>
+        <button id="btn-create-profile" class="primary">Criar leitor</button>
+      </div>
+    </section>
+
+    <!-- ===================== PROGRESSO ===================== -->
+    <section id="view-progress" class="view">
+      <h2 id="progress-title" class="screen-title">Meu progresso</h2>
+      <div id="progress-summary" class="score-cards"></div>
+      <h3 class="hist-title">Leituras recentes</h3>
+      <div id="progress-history" class="history-list"></div>
+    </section>
   </main>
 
   <p id="unsupported" class="unsupported" hidden>
@@ -90,6 +111,8 @@
   </p>
 
   <script src="data.js"></script>
+  <script src="progress.js"></script>
+  <script src="fx.js"></script>
   <script src="alignment.js"></script>
   <script src="speech.js"></script>
   <script src="app.js"></script>

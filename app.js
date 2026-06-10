@@ -11,12 +11,24 @@
     listening: false,
     startTime: 0,
     threshold: 0.75,
-    lastResult: null       // resultado do Alignment.align
+    lastResult: null,      // resultado do Alignment.align
+    prevReached: -1        // última palavra "alcançada" (para o som de acerto)
   };
 
   // ---------- Atalhos de DOM ----------
   var $ = function (id) { return document.getElementById(id); };
-  var views = { library: $("view-library"), reader: $("view-reader") };
+  var views = {
+    library: $("view-library"),
+    reader: $("view-reader"),
+    profiles: $("view-profiles"),
+    progress: $("view-progress")
+  };
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
 
   // Linha de diagnóstico visível na tela (ajuda a descobrir problemas de microfone).
   function dbg(msg) {
@@ -130,6 +142,7 @@
 
     state.listening = true;
     state.startTime = Date.now();
+    state.prevReached = -1;
     $("report").hidden = true;
     var mic = $("btn-mic");
     mic.classList.add("listening");
@@ -154,6 +167,13 @@
     $("live-transcript").textContent = interim || full;
     var spoken = window.Alignment.tokenize(full);
     state.lastResult = window.Alignment.align(state.expectedWords, spoken, state.threshold);
+    // som curtinho quando a criança avança e acerta uma palavra nova.
+    var reached = state.lastResult.reachedIndex;
+    if (reached > state.prevReached) {
+      var st = state.lastResult.statuses[reached];
+      if (st && st.status === "correct" && window.FX) window.FX.ding();
+      state.prevReached = reached;
+    }
     // próxima palavra a ler = logo após a última alcançada (se ainda houver).
     var nextIndex = state.lastResult.reachedIndex + 1;
     if (nextIndex >= state.expectedWords.length) nextIndex = -1;
@@ -238,7 +258,35 @@
       : "Boa tentativa! Vamos ler de novo, devagar. 🐢";
     $("encouragement").textContent = msgs;
 
-    $("report").hidden = false;
+    // Salva a leitura no progresso da criança ativa.
+    var prof = window.Profiles && window.Profiles.active();
+    if (prof) {
+      window.Profiles.record(prof.id, {
+        ts: Date.now(),
+        storyId: state.story ? state.story.id : "",
+        storyTitle: state.story ? state.story.title : "Leitura",
+        accuracy: pct,
+        wpm: wpm,
+        wordsCorrect: s.correct,
+        total: s.evaluated
+      });
+    }
+
+    // Recompensa: som + confete conforme as estrelas.
+    if (window.FX) {
+      if (starCount >= 2) {
+        window.FX.fanfare();
+        window.FX.celebrate(starCount >= 3 ? ["🏆", "⭐", "🎉", "🌟", "✨"] : ["⭐", "🌟", "✨"]);
+      } else {
+        window.FX.soft();
+      }
+    }
+
+    var report = $("report");
+    report.hidden = false;
+    report.classList.remove("pop");
+    void report.offsetWidth; // reinicia a animação
+    report.classList.add("pop");
   }
 
   // ---------- Texto personalizado ----------
@@ -259,6 +307,169 @@
     openStory({ id: "custom", emoji: "📝", title: "Meu texto", pages: pages });
   }
 
+  // ---------- Perfis & Progresso ----------
+  var AVATARS = ["🦊", "🐱", "🐶", "🐼", "🦁", "🐯", "🐸", "🐵", "🦄", "🐧", "🐰", "🐨", "🐷", "🐤"];
+  var pickedEmoji = AVATARS[0];
+
+  function renderProfileBar() {
+    var bar = $("profile-bar");
+    var p = window.Profiles.active();
+    if (p) {
+      bar.innerHTML =
+        '<span class="pb-who"><span class="pb-emoji">' + p.emoji + "</span>" + esc(p.name) + "</span>" +
+        '<span class="pb-actions">' +
+        '<button class="chip" id="pb-progress">📈 Progresso</button>' +
+        '<button class="chip" id="pb-switch">🔄 Trocar</button>' +
+        "</span>";
+      $("pb-progress").addEventListener("click", openProgress);
+      $("pb-switch").addEventListener("click", openProfiles);
+    } else {
+      bar.innerHTML =
+        '<span class="pb-who">👋 Quem vai ler?</span>' +
+        '<button class="chip" id="pb-create">Escolher leitor</button>';
+      $("pb-create").addEventListener("click", openProfiles);
+    }
+  }
+
+  function openProfiles() {
+    renderProfiles();
+    show("profiles");
+  }
+
+  function renderProfiles() {
+    var list = $("profile-list");
+    list.innerHTML = "";
+    var profiles = window.Profiles.all();
+    if (!profiles.length) {
+      var empty = document.createElement("p");
+      empty.className = "muted-note";
+      empty.textContent = "Nenhum leitor ainda. Crie o primeiro aqui embaixo! 👇";
+      list.appendChild(empty);
+    }
+    var aid = window.Profiles.activeId();
+    profiles.forEach(function (p) {
+      var card = document.createElement("div");
+      card.className = "profile-card" + (p.id === aid ? " active" : "");
+      var pick = document.createElement("button");
+      pick.className = "profile-pick";
+      pick.innerHTML =
+        '<span class="profile-emoji">' + p.emoji + "</span>" +
+        '<span class="profile-name">' + esc(p.name) + "</span>";
+      pick.addEventListener("click", function () { selectProfile(p.id); });
+      var del = document.createElement("button");
+      del.className = "profile-del";
+      del.textContent = "🗑️";
+      del.title = "Remover";
+      del.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (confirm('Remover o leitor "' + p.name + '" e todo o progresso dele?')) {
+          window.Profiles.remove(p.id);
+          renderProfiles();
+          renderProfileBar();
+        }
+      });
+      card.appendChild(pick);
+      card.appendChild(del);
+      list.appendChild(card);
+    });
+    renderEmojiPicker();
+    $("new-profile-name").value = "";
+  }
+
+  function renderEmojiPicker() {
+    var box = $("emoji-picker");
+    box.innerHTML = "";
+    AVATARS.forEach(function (em) {
+      var b = document.createElement("button");
+      b.className = "emoji-opt" + (em === pickedEmoji ? " sel" : "");
+      b.textContent = em;
+      b.addEventListener("click", function () {
+        pickedEmoji = em;
+        renderEmojiPicker();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function selectProfile(id) {
+    window.Profiles.setActive(id);
+    renderProfileBar();
+    show("library");
+  }
+
+  function createProfile() {
+    var name = $("new-profile-name").value.trim();
+    if (!name) {
+      $("new-profile-name").focus();
+      return;
+    }
+    window.Profiles.create(name, pickedEmoji);
+    renderProfileBar();
+    show("library");
+  }
+
+  function openProgress() {
+    var p = window.Profiles.active();
+    if (!p) {
+      openProfiles();
+      return;
+    }
+    $("progress-title").textContent = "Progresso de " + p.emoji + " " + p.name;
+
+    var st = window.Profiles.stats(p.id);
+    var sum = $("progress-summary");
+    sum.innerHTML = "";
+    if (!st) {
+      sum.innerHTML = '<p class="muted-note">Ainda não há leituras. Leia uma história para começar! 📖</p>';
+    } else {
+      [
+        [st.count, "Leituras"],
+        [st.avgAcc + "%", "Precisão média"],
+        [st.bestAcc + "%", "Recorde"],
+        [st.totalWords, "Palavras lidas"]
+      ].forEach(function (pair) {
+        var c = document.createElement("div");
+        c.className = "score-card";
+        c.innerHTML =
+          '<div class="score-num">' + pair[0] + "</div>" +
+          '<div class="score-label">' + pair[1] + "</div>";
+        sum.appendChild(c);
+      });
+    }
+
+    var hist = $("progress-history");
+    hist.innerHTML = "";
+    var readings = (p.readings || []).slice(0, 15);
+    if (!readings.length) {
+      hist.innerHTML = '<p class="muted-note">Sem leituras ainda.</p>';
+    } else {
+      readings.forEach(function (r) {
+        var stars = r.accuracy >= 90 ? "⭐⭐⭐" : r.accuracy >= 70 ? "⭐⭐" : r.accuracy >= 40 ? "⭐" : "";
+        var row = document.createElement("div");
+        row.className = "hist-row";
+        row.innerHTML =
+          '<span class="hist-story">' + esc(r.storyTitle || "Leitura") + "</span>" +
+          '<span class="hist-acc">' + r.accuracy + "% " + stars + "</span>" +
+          '<span class="hist-date">' + fmtDate(r.ts) + "</span>";
+        hist.appendChild(row);
+      });
+    }
+    show("progress");
+  }
+
+  function fmtDate(ts) {
+    try {
+      var d = new Date(ts);
+      return (
+        d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) +
+        " " +
+        d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      );
+    } catch (e) {
+      return "";
+    }
+  }
+
   // ---------- Eventos ----------
   function bind() {
     $("btn-home").addEventListener("click", function () { stopListening(); show("library"); });
@@ -273,6 +484,10 @@
     $("rigor-select").addEventListener("change", function () {
       state.threshold = parseFloat(this.value);
     });
+    $("btn-create-profile").addEventListener("click", createProfile);
+    $("new-profile-name").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") createProfile();
+    });
   }
 
   // ---------- Início ----------
@@ -280,6 +495,7 @@
     if (!window.Speech.supported()) $("unsupported").hidden = false;
     if (location.search.indexOf("debug") >= 0) $("debug").style.display = "block"; // ?debug=1
     renderLibrary();
+    renderProfileBar();
     bind();
 
     // Registra o service worker (só funciona quando servido por http/https).

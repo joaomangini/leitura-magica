@@ -175,5 +175,85 @@ window.STORIES = [
       "Juntos, os bichos cavaram um novo caminho para a nascente.",
       "Com esforço e amizade, a floresta voltou a florescer."
     ]
+  },
+
+  /* ----- mais histórias ----- */
+  {
+    id: "o-sol",
+    emoji: "☀️",
+    level: 1,
+    title: "O Sol",
+    pages: [
+      "O sol é quente.",
+      "O sol brilha no céu.",
+      "O dia está claro.",
+      "Eu vejo o sol.",
+      "Que lindo dia!"
+    ]
+  },
+  {
+    id: "a-casa",
+    emoji: "🏠",
+    level: 1,
+    title: "A Minha Casa",
+    pages: [
+      "A casa é grande.",
+      "A porta é azul.",
+      "Tem uma flor na janela.",
+      "Eu moro na casa.",
+      "Minha casa é boa."
+    ]
+  },
+  {
+    id: "peixinho-dourado",
+    emoji: "🐟",
+    level: 2,
+    title: "O Peixinho Dourado",
+    pages: [
+      "O peixinho dourado vive no aquário.",
+      "Ele nada o dia inteiro entre as pedrinhas.",
+      "Quando vê comida, ele fica bem rápido.",
+      "À noite, as luzes do aquário se apagam.",
+      "E o peixinho descansa bem quietinho."
+    ]
+  },
+  {
+    id: "chuva-telhado",
+    emoji: "🌧️",
+    level: 2,
+    title: "A Chuva no Telhado",
+    pages: [
+      "As nuvens cinzentas cobriram o céu.",
+      "Começou a cair uma chuva fininha.",
+      "As gotas faziam música no telhado.",
+      "As crianças olhavam pela janela.",
+      "Depois da chuva, nasceu um arco-íris."
+    ]
+  },
+  {
+    id: "tesouro-vovo",
+    emoji: "🗺️",
+    level: 3,
+    title: "O Tesouro do Vovô",
+    pages: [
+      "O vovô guardava uma caixa antiga no sótão.",
+      "Dentro dela havia mapas, moedas e fotografias.",
+      "Cada objeto contava uma história de viagem.",
+      "Naquela tarde, ele dividiu cada lembrança com o neto.",
+      "O verdadeiro tesouro, descobriram juntos, eram as memórias."
+    ]
+  },
+  {
+    id: "menina-vento",
+    emoji: "🍃",
+    level: 3,
+    title: "A Menina e o Vento",
+    pages: [
+      "Sofia adorava soltar pipa no fim da tarde.",
+      "Certo dia, o vento ficou forte demais.",
+      "A pipa subiu tão alto que sumiu nas nuvens.",
+      "Em vez de chorar, Sofia fez um novo desenho.",
+      "No dia seguinte, construiu uma pipa ainda mais bonita."
+    ]
   }
 ];

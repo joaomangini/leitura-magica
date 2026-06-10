@@ -1,10 +1,12 @@
 /* Service worker simples: cache dos arquivos para o app funcionar instalado/offline. */
-var CACHE = "leitura-magica-v6";
+var CACHE = "leitura-magica-v7";
 var ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./data.js",
+  "./progress.js",
+  "./fx.js",
   "./alignment.js",
   "./speech.js",
   "./app.js",
