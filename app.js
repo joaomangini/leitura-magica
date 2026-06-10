@@ -437,6 +437,8 @@
       });
     }
 
+    renderChart(p.readings || []);
+
     var hist = $("progress-history");
     hist.innerHTML = "";
     var readings = (p.readings || []).slice(0, 15);
@@ -470,6 +472,50 @@
     }
   }
 
+  // Gráfico simples (SVG) da precisão nas últimas leituras, em ordem cronológica.
+  function renderChart(readings) {
+    var box = $("progress-chart");
+    if (!box) return;
+    box.innerHTML = "";
+    var data = (readings || []).slice(0, 10).reverse(); // readings: mais novo primeiro
+    if (data.length < 2) return; // precisa de ao menos 2 leituras p/ mostrar evolução
+
+    var W = 320, H = 130, pad = 24, n = data.length;
+    var bw = (W - pad * 2) / n;
+    var parts = "";
+    data.forEach(function (r, i) {
+      var acc = Math.max(0, Math.min(100, r.accuracy || 0));
+      var bh = (H - pad * 2) * (acc / 100);
+      var w = bw * 0.66;
+      var x = pad + i * bw + (bw - w) / 2;
+      var y = H - pad - bh;
+      var color = acc >= 90 ? "#00b894" : acc >= 70 ? "#6c5ce7" : "#e17055";
+      parts +=
+        '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) +
+        '" height="' + Math.max(2, bh).toFixed(1) + '" rx="4" fill="' + color + '"></rect>' +
+        '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (y - 4).toFixed(1) +
+        '" text-anchor="middle" font-size="10" fill="#636e72">' + acc + "</text>";
+    });
+    box.innerHTML =
+      '<h3 class="chart-title">📈 Evolução da precisão</h3>' +
+      '<svg viewBox="0 0 ' + W + " " + H + '" class="chart-svg" preserveAspectRatio="xMidYMid meet">' +
+      '<line x1="' + pad + '" y1="' + (H - pad) + '" x2="' + (W - pad) + '" y2="' + (H - pad) +
+      '" stroke="#dfe6e9"></line>' + parts + "</svg>";
+  }
+
+  // Abre um arquivo .txt e carrega como história personalizada.
+  function openTextFile(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var text = String(reader.result || "").trim();
+      if (!text) return;
+      $("custom-text").value = text;
+      openCustomText();
+    };
+    reader.readAsText(file);
+  }
+
   // ---------- Eventos ----------
   function bind() {
     $("btn-home").addEventListener("click", function () { stopListening(); show("library"); });
@@ -481,6 +527,11 @@
     });
     $("btn-mic").addEventListener("click", toggleMic);
     $("btn-custom").addEventListener("click", openCustomText);
+    $("btn-file").addEventListener("click", function () { $("file-input").click(); });
+    $("file-input").addEventListener("change", function () {
+      if (this.files && this.files[0]) openTextFile(this.files[0]);
+      this.value = "";
+    });
     $("rigor-select").addEventListener("change", function () {
       state.threshold = parseFloat(this.value);
     });

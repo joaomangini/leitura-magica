@@ -398,3 +398,10 @@ textarea {
   0% { transform: scale(.85); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+/* ---------- Importar arquivo + gráfico ---------- */
+.custom-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.custom-actions .primary { margin-top: 0; }
+.chart-box { margin: 16px 0 4px; }
+.chart-title { margin: 0 0 6px; font-size: 1rem; }
+.chart-svg { width: 100%; max-width: 420px; display: block; }
