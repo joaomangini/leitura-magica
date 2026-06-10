@@ -37,17 +37,35 @@
 
   // ---------- Biblioteca ----------
   function renderLibrary() {
-    var grid = $("story-list");
-    grid.innerHTML = "";
-    window.STORIES.forEach(function (story) {
-      var card = document.createElement("button");
-      card.className = "story-card";
-      card.innerHTML =
-        '<span class="story-emoji">' + story.emoji + "</span>" +
-        '<div class="story-name">' + story.title + "</div>" +
-        '<div class="story-meta">' + story.pages.length + " páginas</div>";
-      card.addEventListener("click", function () { openStory(story); });
-      grid.appendChild(card);
+    var container = $("story-list");
+    container.innerHTML = "";
+    var levels = window.LEVELS || [{ n: 2, emoji: "📖", name: "Histórias", hint: "" }];
+
+    levels.forEach(function (lv) {
+      var stories = window.STORIES.filter(function (s) { return (s.level || 2) === lv.n; });
+      if (!stories.length) return;
+
+      var header = document.createElement("div");
+      header.className = "level-header level-" + lv.n;
+      header.innerHTML =
+        '<span class="level-emoji">' + lv.emoji + "</span>" +
+        '<span class="level-name">Nível ' + lv.n + " — " + lv.name + "</span>" +
+        '<span class="level-hint">' + lv.hint + "</span>";
+      container.appendChild(header);
+
+      var grid = document.createElement("div");
+      grid.className = "story-grid";
+      stories.forEach(function (story) {
+        var card = document.createElement("button");
+        card.className = "story-card level-" + (story.level || 2);
+        card.innerHTML =
+          '<span class="story-emoji">' + story.emoji + "</span>" +
+          '<div class="story-name">' + story.title + "</div>" +
+          '<div class="story-meta">' + story.pages.length + " páginas</div>";
+        card.addEventListener("click", function () { openStory(story); });
+        grid.appendChild(card);
+      });
+      container.appendChild(grid);
     });
   }
 

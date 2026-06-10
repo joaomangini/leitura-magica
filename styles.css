@@ -55,11 +55,36 @@ html, body {
 .lead { font-size: 1.05rem; line-height: 1.4; }
 
 /* ---------- Biblioteca ---------- */
+.story-list { display: block; }
+
+.level-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 22px 0 12px;
+  padding-left: 4px;
+  border-left: 6px solid var(--roxo);
+  padding: 4px 0 4px 12px;
+}
+.level-header:first-child { margin-top: 6px; }
+.level-emoji { font-size: 1.3rem; }
+.level-name { font-weight: bold; font-size: 1.1rem; }
+.level-hint { font-size: .82rem; color: var(--cinza); }
+/* cor por nível */
+.level-header.level-1 { border-left-color: var(--verde); }
+.level-header.level-2 { border-left-color: var(--roxo); }
+.level-header.level-3 { border-left-color: var(--vermelho); }
+
 .story-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 14px;
 }
+/* faixa de cor no topo do card, indicando o nível */
+.story-card.level-1 { border-top: 5px solid var(--verde); }
+.story-card.level-2 { border-top: 5px solid var(--roxo); }
+.story-card.level-3 { border-top: 5px solid var(--vermelho); }
 .story-card {
   background: var(--card);
   border: none;
