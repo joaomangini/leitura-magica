@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#6c5ce7" />
+  <title>Leitura Mágica</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <button id="btn-home" class="icon-btn" title="Início" hidden>‹ Voltar</button>
+    <h1 class="brand">📖 Leitura Mágica</h1>
+    <span class="spacer"></span>
+  </header>
+
+  <main id="app">
+    <!-- ===================== BIBLIOTECA ===================== -->
+    <section id="view-library" class="view active">
+      <p class="lead">Escolha uma história para ler em voz alta. Eu escuto e te ajudo a ler cada vez melhor! ✨</p>
+      <div id="story-list" class="story-grid"></div>
+
+      <div class="custom-box">
+        <h2>Ou cole o seu próprio texto</h2>
+        <textarea id="custom-text" rows="4" placeholder="Cole aqui qualquer texto para a criança ler..."></textarea>
+        <button id="btn-custom" class="primary">Ler este texto</button>
+      </div>
+    </section>
+
+    <!-- ===================== LEITOR ===================== -->
+    <section id="view-reader" class="view">
+      <div class="reader-head">
+        <h2 id="story-title">Título</h2>
+        <label class="rigor">
+          Rigor:
+          <select id="rigor-select">
+            <option value="0.6">Fácil</option>
+            <option value="0.75" selected>Médio</option>
+            <option value="0.88">Difícil</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="page-text" class="page-text" aria-live="polite"></div>
+
+      <div class="page-nav">
+        <button id="btn-prev" class="ghost">‹ Página</button>
+        <span id="page-indicator" class="page-indicator">1 / 1</span>
+        <button id="btn-next" class="ghost">Página ›</button>
+      </div>
+
+      <div class="mic-area">
+        <button id="btn-mic" class="mic">
+          <span class="mic-emoji">🎤</span>
+          <span class="mic-label">Começar a ler</span>
+        </button>
+        <p id="mic-status" class="mic-status"></p>
+        <p id="live-transcript" class="live-transcript"></p>
+        <pre id="debug" class="debug" title="diagnóstico"></pre>
+      </div>
+
+      <!-- Relatório -->
+      <div id="report" class="report" hidden>
+        <h3>Como você foi 🌟</h3>
+        <div class="score-cards">
+          <div class="score-card">
+            <div id="score-accuracy" class="score-num">0%</div>
+            <div class="score-label">Precisão</div>
+          </div>
+          <div class="score-card">
+            <div id="score-words" class="score-num">0</div>
+            <div class="score-label">Palavras certas</div>
+          </div>
+          <div class="score-card">
+            <div id="score-wpm" class="score-num">0</div>
+            <div class="score-label">Palavras / min</div>
+          </div>
+        </div>
+        <div id="stars" class="stars"></div>
+        <div id="practice" class="practice"></div>
+        <p id="encouragement" class="encouragement"></p>
+      </div>
+    </section>
+  </main>
+
+  <p id="unsupported" class="unsupported" hidden>
+    ⚠️ Seu navegador não suporta reconhecimento de voz. Use o <b>Google Chrome</b> (no computador ou Android).
+  </p>
+
+  <script src="data.js"></script>
+  <script src="alignment.js"></script>
+  <script src="speech.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

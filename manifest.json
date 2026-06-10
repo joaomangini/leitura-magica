@@ -1,0 +1,13 @@
+{
+  "name": "Leitura Mágica",
+  "short_name": "Leitura",
+  "description": "App que escuta a criança ler e ajuda a melhorar a leitura.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f6ff",
+  "theme_color": "#6c5ce7",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="110" fill="#6c5ce7"/>
+  <g transform="translate(96 120)">
+    <path d="M16 24c40-22 96-22 144 0v224c-48-22-104-22-144 0V24z" fill="#fff"/>
+    <path d="M304 24c-40-22-96-22-144 0v224c48-22 104-22 144 0V24z" fill="#a29bfe"/>
+    <line x1="160" y1="20" x2="160" y2="248" stroke="#6c5ce7" stroke-width="8"/>
+  </g>
+  <text x="256" y="440" font-size="120" text-anchor="middle">✨</text>
+</svg>
