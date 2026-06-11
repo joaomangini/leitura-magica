@@ -12,8 +12,13 @@
     startTime: 0,
     threshold: 0.75,
     lastResult: null,      // resultado do Alignment.align
-    prevReached: -1        // última palavra "alcançada" (para o som de acerto)
+    prevReached: -1,       // última palavra "alcançada" (para o som de acerto)
+    speaking: false,       // modo "Ouvir": o app está lendo a página em voz alta
+    finishTimer: null,     // espera curta antes de encerrar sozinho no fim da página
+    fontScale: 1           // tamanho da letra do texto da página (A- / A+)
   };
+
+  var FONT_KEY = "lm_font";
 
   // ---------- Atalhos de DOM ----------
   var $ = function (id) { return document.getElementById(id); };
@@ -91,6 +96,7 @@
   // ---------- Leitor / Página ----------
   function loadPage() {
     stopListening();
+    cancelSpeak();
     var story = state.story;
     $("story-title").textContent = story.title;
     state.expectedWords = window.Alignment.tokenize(story.pages[state.pageIndex]);
@@ -102,6 +108,7 @@
     $("live-transcript").textContent = "";
     $("mic-status").textContent = "";
     renderWords();
+    applyFontScale();
   }
 
   // Desenha as palavras da página com suas cores de status.
@@ -112,11 +119,27 @@
     state.expectedWords.forEach(function (word, i) {
       var span = document.createElement("span");
       var st = statuses && statuses[i] ? statuses[i].status : "pending";
-      span.className = "w " + st + (i === currentIndex ? " current" : "");
+      span.className = "w tappable " + st + (i === currentIndex ? " current" : "");
       span.textContent = word;
+      // tocar a palavra para ouvir a pronúncia (quando não está ouvindo nem lendo sozinho)
+      span.addEventListener("click", function () {
+        if (state.listening || state.speaking) return;
+        window.Speech.speak(word, { rate: 0.7 });
+      });
       container.appendChild(span);
       container.appendChild(document.createTextNode(" "));
     });
+  }
+
+  // ---------- Tamanho da letra (A- / A+) ----------
+  function applyFontScale() {
+    var pt = $("page-text");
+    if (pt) pt.style.fontSize = (1.6 * state.fontScale).toFixed(2) + "rem";
+  }
+  function changeFont(delta) {
+    state.fontScale = Math.max(0.8, Math.min(2.0, Math.round((state.fontScale + delta) * 10) / 10));
+    try { localStorage.setItem(FONT_KEY, String(state.fontScale)); } catch (e) { /* ignora */ }
+    applyFontScale();
   }
 
   // ---------- Microfone / Leitura ----------
@@ -130,6 +153,7 @@
       $("unsupported").hidden = false;
       return;
     }
+    cancelSpeak(); // não dá para ouvir e ler ao mesmo tempo
     state.threshold = parseFloat($("rigor-select").value);
     dbg("clicou em começar; iniciando reconhecimento...");
     state.reader = new window.Speech.Reader({ lang: "pt-BR" });
@@ -149,10 +173,13 @@
     mic.querySelector(".mic-label").textContent = "Parar";
     $("mic-status").textContent = "Pode ler! Estou ouvindo... 👂";
     renderWords(null, 0); // já indica a primeira palavra a ler
+    keepAwake(true); // no celular, a tela não pode apagar no meio da leitura
   }
 
   function stopListening() {
+    if (state.finishTimer) { clearTimeout(state.finishTimer); state.finishTimer = null; }
     if (state.reader) state.reader.stop();
+    keepAwake(false);
     if (!state.listening) return;
     state.listening = false;
     var mic = $("btn-mic");
@@ -178,6 +205,16 @@
     var nextIndex = state.lastResult.reachedIndex + 1;
     if (nextIndex >= state.expectedWords.length) nextIndex = -1;
     renderWords(state.lastResult.statuses, nextIndex);
+
+    // Chegou na última palavra? Espera um instante (resultados finais ainda chegam)
+    // e encerra sozinho — a criança não precisa apertar "Parar".
+    if (nextIndex === -1 && state.listening && !state.finishTimer) {
+      state.finishTimer = setTimeout(function () {
+        state.finishTimer = null;
+        stopListening(); // dispara onend → relatório
+        $("mic-status").textContent = "🎉 Você terminou a página!";
+      }, 1500);
+    }
   }
 
   function onSpeechError(code) {
@@ -207,6 +244,65 @@
   function onSpeechEnd() {
     showReport();
   }
+
+  // ---------- Modo "Ouvir" (o app lê a página com destaque karaokê) ----------
+  function toggleSpeak() {
+    if (state.speaking) { cancelSpeak(); return; }
+    if (state.listening) stopListening();
+    var text = state.story.pages[state.pageIndex];
+
+    // posição inicial de cada palavra no texto, para achar a palavra pelo charIndex
+    var starts = [];
+    var re = /\S+/g, m;
+    while ((m = re.exec(text))) starts.push(m.index);
+
+    state.speaking = true;
+    var btn = $("btn-listen");
+    btn.classList.add("speaking");
+    btn.querySelector(".listen-label").textContent = "Parar";
+    $("mic-status").textContent = "🔊 Escute e acompanhe com o dedo!";
+
+    window.Speech.speakPage(text, {
+      onword: function (charIndex) {
+        var i = -1;
+        for (var k = 0; k < starts.length && starts[k] <= charIndex; k++) i = k;
+        if (i >= 0 && state.speaking) renderWords(null, i);
+      },
+      onend: speakDone
+    });
+  }
+
+  function cancelSpeak() {
+    if (!state.speaking) return;
+    window.Speech.stopSpeaking(); // dispara onend → speakDone
+    speakDone();
+  }
+
+  function speakDone() {
+    if (!state.speaking) return;
+    state.speaking = false;
+    var btn = $("btn-listen");
+    btn.classList.remove("speaking");
+    btn.querySelector(".listen-label").textContent = "Ouvir";
+    $("mic-status").textContent = "";
+    renderWords(state.lastResult ? state.lastResult.statuses : null);
+  }
+
+  // ---------- Tela sempre acesa durante a leitura (Wake Lock) ----------
+  var wakeLock = null;
+  function keepAwake(on) {
+    if (!("wakeLock" in navigator)) return;
+    if (on) {
+      navigator.wakeLock.request("screen").then(function (l) { wakeLock = l; }).catch(function () {});
+    } else if (wakeLock) {
+      wakeLock.release().catch(function () {});
+      wakeLock = null;
+    }
+  }
+  // Ao voltar para a aba, o navegador solta o wake lock — pedimos de novo se ainda lendo.
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && state.listening) keepAwake(true);
+  });
 
   // ---------- Relatório ----------
   function showReport() {
@@ -280,6 +376,14 @@
       } else {
         window.FX.soft();
       }
+    }
+
+    // Botão de avançar: próxima página, ou voltar à biblioteca se for a última.
+    var nextBtn = $("btn-next-page");
+    if (state.story && state.pageIndex < state.story.pages.length - 1) {
+      nextBtn.textContent = "Próxima página ›";
+    } else {
+      nextBtn.textContent = "📚 Voltar à biblioteca";
     }
 
     var report = $("report");
@@ -526,6 +630,18 @@
       if (state.pageIndex < state.story.pages.length - 1) { state.pageIndex++; loadPage(); }
     });
     $("btn-mic").addEventListener("click", toggleMic);
+    $("btn-listen").addEventListener("click", toggleSpeak);
+    $("btn-font-dec").addEventListener("click", function () { changeFont(-0.2); });
+    $("btn-font-inc").addEventListener("click", function () { changeFont(0.2); });
+    $("btn-again").addEventListener("click", function () { loadPage(); });
+    $("btn-next-page").addEventListener("click", function () {
+      if (state.story && state.pageIndex < state.story.pages.length - 1) {
+        state.pageIndex++;
+        loadPage();
+      } else {
+        show("library");
+      }
+    });
     $("btn-custom").addEventListener("click", openCustomText);
     $("btn-file").addEventListener("click", function () { $("file-input").click(); });
     $("file-input").addEventListener("change", function () {
@@ -545,6 +661,8 @@
   function init() {
     if (!window.Speech.supported()) $("unsupported").hidden = false;
     if (location.search.indexOf("debug") >= 0) $("debug").style.display = "block"; // ?debug=1
+    var savedFont = parseFloat(localStorage.getItem(FONT_KEY));
+    if (savedFont >= 0.8 && savedFont <= 2.0) state.fontScale = savedFont;
     renderLibrary();
     renderProfileBar();
     bind();

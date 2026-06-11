@@ -38,14 +38,20 @@
     <section id="view-reader" class="view">
       <div class="reader-head">
         <h2 id="story-title">Título</h2>
-        <label class="rigor">
-          Rigor:
-          <select id="rigor-select">
-            <option value="0.6">Fácil</option>
-            <option value="0.75" selected>Médio</option>
-            <option value="0.88">Difícil</option>
-          </select>
-        </label>
+        <div class="reader-tools">
+          <label class="rigor">
+            Rigor:
+            <select id="rigor-select">
+              <option value="0.6">Fácil</option>
+              <option value="0.75" selected>Médio</option>
+              <option value="0.88">Difícil</option>
+            </select>
+          </label>
+          <div class="fsize" role="group" aria-label="Tamanho da letra">
+            <button id="btn-font-dec" class="fsize-btn" title="Diminuir letra">A−</button>
+            <button id="btn-font-inc" class="fsize-btn" title="Aumentar letra">A+</button>
+          </div>
+        </div>
       </div>
 
       <div id="page-text" class="page-text" aria-live="polite"></div>
@@ -60,6 +66,10 @@
         <button id="btn-mic" class="mic">
           <span class="mic-emoji">🎤</span>
           <span class="mic-label">Começar a ler</span>
+        </button>
+        <button id="btn-listen" class="listen">
+          <span class="listen-emoji">🔊</span>
+          <span class="listen-label">Ouvir</span>
         </button>
         <p id="mic-status" class="mic-status"></p>
         <p id="live-transcript" class="live-transcript"></p>
@@ -86,6 +96,10 @@
         <div id="stars" class="stars"></div>
         <div id="practice" class="practice"></div>
         <p id="encouragement" class="encouragement"></p>
+        <div class="report-actions">
+          <button id="btn-again" class="primary">🔄 Ler de novo</button>
+          <button id="btn-next-page" class="ghost">Próxima página ›</button>
+        </div>
       </div>
     </section>
 

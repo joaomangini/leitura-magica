@@ -405,3 +405,45 @@ textarea {
 .chart-box { margin: 16px 0 4px; }
 .chart-title { margin: 0 0 6px; font-size: 1rem; }
 .chart-svg { width: 100%; max-width: 420px; display: block; }
+
+/* ---------- Ferramentas do leitor (rigor + tamanho da letra) ---------- */
+.reader-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fsize { display: inline-flex; gap: 4px; }
+.fsize-btn {
+  background: #fff;
+  border: 2px solid var(--roxo-claro);
+  color: var(--roxo);
+  border-radius: 10px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: inherit;
+  font-size: .95rem;
+}
+.fsize-btn:active { transform: scale(0.94); }
+
+/* palavras tocáveis (ouvir a pronúncia) */
+.w.tappable { cursor: pointer; }
+
+/* ---------- Modo "Ouvir" ---------- */
+.listen {
+  background: var(--roxo);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 22px;
+  font-size: 1.05rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  box-shadow: 0 6px 18px rgba(108, 92, 231, 0.35);
+}
+.listen .listen-emoji { font-size: 1.3rem; }
+.listen.speaking { background: var(--vermelho); }
+
+/* ---------- Ações do relatório ---------- */
+.report-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+.report-actions .primary, .report-actions .ghost { margin-top: 0; }
